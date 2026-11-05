@@ -12,8 +12,9 @@ import {
   FiMessageCircle,
 } from 'react-icons/fi'
 import { toast } from 'react-toastify'
+import { saveUser } from '../auth.js'
 
-const API_URL = 'http://localhost:9000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const containerVariants = {
@@ -135,13 +136,17 @@ export default function Login() {
       })
       const data = await res.json().catch(() => ({}))
 
-      if (!res.ok) {
+      if (res.status !== 200) {
         toast.error(data.message?.trim() || 'Kirishda xatolik yuz berdi')
         return
       }
 
-      const storage = remember ? localStorage : sessionStorage
-      storage.setItem('user', JSON.stringify(data.user))
+      if (typeof data.user?._id !== 'string' || !data.user._id) {
+        toast.error("Server foydalanuvchi ma'lumotini qaytarmadi")
+        return
+      }
+
+      saveUser(data.user, remember)
       toast.success(data.message?.trim() || 'Xush kelibsiz!')
       navigate('/')
     } catch {

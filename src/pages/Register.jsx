@@ -14,8 +14,9 @@ import {
   FiUser,
 } from 'react-icons/fi'
 import { toast } from 'react-toastify'
+import { saveUser } from '../auth.js'
 
-const API_URL = 'http://localhost:9000'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const USERNAME_RE = /^[a-z0-9_.]{3,20}$/
 
@@ -184,13 +185,19 @@ export default function Register() {
       })
       const data = await res.json().catch(() => ({}))
 
-      if (!res.ok) {
+      if (res.status !== 201) {
         toast.error(data.message?.trim() || "Ro'yxatdan o'tishda xatolik")
         return
       }
 
+      if (typeof data.user?._id !== 'string' || !data.user._id) {
+        toast.error("Server foydalanuvchi ma'lumotini qaytarmadi")
+        return
+      }
+
+      saveUser(data.user)
       toast.success(data.message?.trim() || 'Akkaunt yaratildi!')
-      navigate('/login')
+      navigate('/')
     } catch {
       toast.error("Server bilan aloqa yo'q. Backend ishlayaptimi?")
     } finally {
